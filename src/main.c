@@ -31,9 +31,11 @@
 #include "xo-file.h"
 #include "xo-paint.h"
 #include "xo-shapes.h"
+#include "trie.h"
 
 GtkWidget *winMain;
 GnomeCanvas *canvas;
+Trie* trie;
 
 struct Journal journal; // the journal
 struct BgPdf bgpdf;  // the PDF loader stuff
@@ -45,6 +47,7 @@ double DEFAULT_ZOOM;
 void init_stuff (int argc, char *argv[])
 {
   GtkWidget *w;
+  trie = make_trie_from_pattern_file("patterns.txt");
   GList *dev_list;
   GdkDevice *device;
   GdkScreen *screen;

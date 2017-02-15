@@ -28,6 +28,9 @@
 #include "xo-support.h"
 #include "xo-misc.h"
 #include "xo-paint.h"
+#include "trie.h"
+
+extern Trie* trie;
 
 /************** drawing nice cursors *********/
 
@@ -635,6 +638,11 @@ void end_text(void)
 
   // finalize the text that's been edited... 
   buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(ui.cur_item->widget));
+  // for processing special keywords
+  gtk_text_buffer_get_bounds(buffer, &start, &end);
+  new_text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+  gtk_text_buffer_set_text(buffer, compile_string(trie, new_text), -1);  
+
   gtk_text_buffer_get_bounds(buffer, &start, &end);
   ui.cur_item->type = ITEM_TEXT;
   new_text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
