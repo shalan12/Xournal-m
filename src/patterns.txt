@@ -414,7 +414,7 @@
 \eqdef ≝
 \measeq ≞
 \questeq ≟
-\ne ≠
+\neq ≠
 \equiv ≡
 \nequiv ≢
 \Equiv ≣

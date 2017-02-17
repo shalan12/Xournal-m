@@ -23,6 +23,6 @@ void insert_at_node(TrieNode* node, char* word);
 char* compile_string(Trie* trie, char* string);
 void print_trie(Trie* trie);
 void print_trie_node(TrieNode* node, char* c);
-char* trie_node_look_up(TrieNode* node, char* string, char* out);
+char* trie_node_look_up(TrieNode* node, char* string, char* out, int idx, int* last_good_idx);
 
 #endif 

@@ -6,36 +6,6 @@
 
 const int MAX_PATTERN_LEN = 10;
 
-char * get_ascii_characters(char* unicode_str) 
-{
-	long numChars = g_utf8_strlen(unicode_str, -1); // number of unicode characters in the string
-	char * ascii_part = malloc(sizeof(char) * (numChars + 1));
-	
-	char * iter = unicode_str; // to iterate over the string
-	int sizeChar; // to store the number of bytes taken by each unicode character
-	int idx = 0;
-
-	for (int i = 0; i < numChars; i++) {
-		sizeChar = g_utf8_next_char(iter) - iter; // get the number of bytes taken by the character
-		if (sizeChar == 1) ascii_part[idx++] = *iter; // copy ascii character
-		iter += sizeChar; // move over to the next character
-	}
-
-	ascii_part[idx] = '\0';
-	return ascii_part;
-}
-
-
-Trie* make_trie(char** words, int num_words) {
-	Trie* trie = malloc(sizeof(Trie));
-	trie->root = make_trie_node();
-	
-	for (int i = 0; i < num_words; i++) {
-		insert_at_node(trie->root, words[i]);
-	}
-	return trie;
-}
-
 TrieNode* make_trie_node() {
 	TrieNode* node = malloc(sizeof(TrieNode));
 	node->children = g_hash_table_new(g_str_hash, g_str_equal);
@@ -63,17 +33,26 @@ char* compile_string(Trie* trie, char* string) {
 	char* next;
 	char* compiled = malloc(strlen(string));
 	compiled[0] = '\0';
+	int last_good_idx;
+	char matched[MAX_PATTERN_LEN];
+
 	while (1) {
+		last_good_idx = 0;
 		tmp[0] = '\0';
-		next = trie_node_look_up(trie->root, string, tmp);
-		if (tmp[0] != '\0') {
-			//printf("%s\n", tmp);
-			strcat(compiled, g_hash_table_lookup(trie->table, tmp));
+		matched[0] = '\0';
+		next = trie_node_look_up(trie->root, string, tmp, 0, &last_good_idx);
+		strncat(matched, tmp, last_good_idx);
+
+		if (matched[0] != '\0') {
+			//printf("matched : %s\n", matched);
+			strcat(compiled, g_hash_table_lookup(trie->table, matched));
 		}
+		
 		if (next[0] == '\0') break;
 		else {
 			if (string == next) next += 1;
-			if (tmp[0] == '\0') strncat(compiled, string, next-string);
+			if (matched[0] == '\0') strncat(compiled, string, next-string);
+			else strcat(compiled, matched+last_good_idx);
 			string = next;
 		}
 		
@@ -89,17 +68,14 @@ char* compile_string(Trie* trie, char* string) {
 /
 / reads a string until a pattern has been matched or the string has terminated 
 */
-char* trie_node_look_up(TrieNode* node, char* string, char* out) {
-	if (node->is_end_state) return string; 
-	else { // if it's the NULL character, we won't find a next node and return NULL
-		char c[1];
-		c[0] = *string;
-		TrieNode* next = g_hash_table_lookup(node->children, c); 
-		if (next) return trie_node_look_up(next, string + 1, strcat(out, c));
-		else {
-			out[0] = '\0';
-			return string;
-		}
+char* trie_node_look_up(TrieNode* node, char* string, char* out, int idx, int* last_good_idx) {
+	if (node->is_end_state) *last_good_idx = idx; 
+	char c[1];
+	c[0] = *string;
+	TrieNode* next = g_hash_table_lookup(node->children, c); 
+	if (next) return trie_node_look_up(next, string + 1, strcat(out, c), idx+1, last_good_idx);
+	else {
+		return string;
 	}
 }
 
