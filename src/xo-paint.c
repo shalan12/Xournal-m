@@ -30,7 +30,8 @@
 #include "xo-paint.h"
 #include "trie.h"
 
-extern Trie* trie;
+extern Trie* toUnicode;
+extern Trie* toAscii;
 
 /************** drawing nice cursors *********/
 
@@ -596,8 +597,15 @@ void start_text(GdkEvent *event, struct Item *item)
       item->font_size*ui.zoom*PANGO_SCALE);
   item->widget = gtk_text_view_new();
   buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(item->widget));
-  if (item->text!=NULL)
+  if (item->text!=NULL) {
+    // to convert back unicode characters to their ascii representations
+    char *tmp =  compile_string(toAscii, item->text);  
+    free(item->text);
+    item->text = tmp;
+    
     gtk_text_buffer_set_text(buffer, item->text, -1);
+  }
+
   gtk_widget_modify_font(item->widget, font_desc);
   rgb_to_gdkcolor(item->brush.color_rgba, &color);
   gtk_widget_modify_text(item->widget, GTK_STATE_NORMAL, &color);
@@ -631,6 +639,7 @@ void end_text(void)
   GtkTextBuffer *buffer;
   GtkTextIter start, end;
   gchar *new_text;
+
   struct UndoErasureData *erasure;
   GnomeCanvasItem *tmpitem;
 
@@ -641,7 +650,8 @@ void end_text(void)
   // for processing special keywords
   gtk_text_buffer_get_bounds(buffer, &start, &end);
   new_text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
-  gtk_text_buffer_set_text(buffer, compile_string(trie, new_text), -1);  
+  gtk_text_buffer_set_text(buffer, compile_string(toUnicode, new_text), -1);
+  free(new_text);
 
   gtk_text_buffer_get_bounds(buffer, &start, &end);
   ui.cur_item->type = ITEM_TEXT;

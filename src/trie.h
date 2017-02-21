@@ -16,8 +16,9 @@ typedef struct Trie
 
 } Trie;
 
+Trie* make_trie(GArray* words, GArray* mappings, int len);
+int get_words_mappings_from_file(char* filename, GArray* words, GArray* mappings);
 Trie* make_trie_from_pattern_file(char* filename);
-Trie* make_trie(char** words, int num_words);
 TrieNode* make_trie_node();
 void insert_at_node(TrieNode* node, char* word);
 char* compile_string(Trie* trie, char* string);

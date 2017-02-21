@@ -35,7 +35,8 @@
 
 GtkWidget *winMain;
 GnomeCanvas *canvas;
-Trie* trie;
+Trie* toUnicode;
+Trie* toAscii;
 
 struct Journal journal; // the journal
 struct BgPdf bgpdf;  // the PDF loader stuff
@@ -47,7 +48,13 @@ double DEFAULT_ZOOM;
 void init_stuff (int argc, char *argv[])
 {
   GtkWidget *w;
-  trie = make_trie_from_pattern_file("patterns.txt");
+
+  GArray* words = g_array_new (FALSE, FALSE, sizeof(char*));
+  GArray* mappings = g_array_new (FALSE, FALSE, sizeof(char*));
+  int len = get_words_mappings_from_file("patterns.txt", words, mappings);
+  toUnicode = make_trie(words, mappings, len);
+  toAscii = make_trie(mappings, words, len);
+
   GList *dev_list;
   GdkDevice *device;
   GdkScreen *screen;

@@ -4,7 +4,26 @@
 #include <glib.h>
 #include <string.h>
 
-const int MAX_PATTERN_LEN = 10;
+const int MAX_PATTERN_LEN = 30;
+
+char * get_ascii_characters(char* unicode_str) 
+{
+	long numChars = g_utf8_strlen(unicode_str, -1); // number of unicode characters in the string
+	char * ascii_part = malloc(sizeof(char) * (numChars + 1));
+	
+	char * iter = unicode_str; // to iterate over the string
+	int sizeChar; // to store the number of bytes taken by each unicode character
+	int idx = 0;
+
+	for (int i = 0; i < numChars; i++) {
+		sizeChar = g_utf8_next_char(iter) - iter; // get the number of bytes taken by the character
+		if (sizeChar == 1) ascii_part[idx++] = *iter; // copy ascii character
+		iter += sizeChar; // move over to the next character
+	}
+
+	ascii_part[idx] = '\0';
+	return ascii_part;
+}
 
 TrieNode* make_trie_node() {
 	TrieNode* node = malloc(sizeof(TrieNode));
@@ -30,8 +49,9 @@ void insert_at_node(TrieNode* node, char* word) {
 
 char* compile_string(Trie* trie, char* string) {
 	char tmp[MAX_PATTERN_LEN];
+	char* curr = string; // copy pointer
 	char* next;
-	char* compiled = malloc(strlen(string));
+	char* compiled = malloc(sizeof(char) * strlen(string) * MAX_PATTERN_LEN);
 	compiled[0] = '\0';
 	int last_good_idx;
 	char matched[MAX_PATTERN_LEN];
@@ -40,20 +60,20 @@ char* compile_string(Trie* trie, char* string) {
 		last_good_idx = 0;
 		tmp[0] = '\0';
 		matched[0] = '\0';
-		next = trie_node_look_up(trie->root, string, tmp, 0, &last_good_idx);
+		next = trie_node_look_up(trie->root, curr, tmp, 0, &last_good_idx);
 		strncat(matched, tmp, last_good_idx);
 
 		if (matched[0] != '\0') {
 			//printf("matched : %s\n", matched);
 			strcat(compiled, g_hash_table_lookup(trie->table, matched));
 		}
-		
+
 		if (next[0] == '\0') break;
 		else {
-			if (string == next) next += 1;
-			if (matched[0] == '\0') strncat(compiled, string, next-string);
+			if (curr == next) next += 1;
+			if (matched[0] == '\0') strncat(compiled, curr, next-curr);
 			else strcat(compiled, matched+last_good_idx);
-			string = next;
+			curr = next;
 		}
 		
 	}
@@ -99,26 +119,38 @@ void print_trie_node(TrieNode* node, char* c) {
 	}
 }
 
-Trie* make_trie_from_pattern_file(char* filename) {
+Trie* make_trie(GArray* words, GArray* mappings, int len) {
 	Trie* trie = malloc(sizeof(Trie));
 	trie->root = make_trie_node();
 	trie->table = g_hash_table_new(g_str_hash, g_str_equal);
+	char* word;
 
-	FILE* fp = fopen(filename, "r");
-	char pattern[MAX_PATTERN_LEN];
-	char mapping[MAX_PATTERN_LEN];
-	int i = 0;
-	char* h_pattern;
-	char* h_mapping;
-	while(!feof(fp)) {
-		i++;
-		fscanf(fp, "%s", pattern);
-		fscanf(fp, "%s\n", mapping);
-		h_pattern = malloc(sizeof(char) * strlen(pattern));
-		h_mapping = malloc(sizeof(char) * strlen(mapping));
-		g_hash_table_insert(trie->table, strcpy(h_pattern, pattern), strcpy(h_mapping, mapping));
-		insert_at_node(trie->root, pattern);
+	for (int i = 0; i < len; i++) {
+		word = g_array_index(words,char*,i);
+		g_hash_table_insert(trie->table, word, g_array_index(mappings, char*, i));
+		insert_at_node(trie->root, word);
 	}
 
 	return trie;
+}
+
+// returns the length of the arrays
+int get_words_mappings_from_file(char* filename, GArray* words, GArray* mappings) {
+	
+	FILE* fp = fopen(filename, "r");
+	char* word;
+	char* mapping;
+	int i = 0;
+	
+	while(!feof(fp)) {
+		i++;
+		word = malloc(sizeof(char) * MAX_PATTERN_LEN);
+		mapping = malloc(sizeof(char) * MAX_PATTERN_LEN);
+		fscanf(fp, "%s", word);
+		fscanf(fp, "%s\n", mapping);
+		g_array_append_val(words, word);
+		g_array_append_val(mappings, mapping);
+	}
+
+	return i;
 }
