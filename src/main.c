@@ -35,6 +35,7 @@
 
 GtkWidget *winMain;
 GnomeCanvas *canvas;
+
 Trie* toUnicode;
 Trie* toAscii;
 
@@ -49,11 +50,14 @@ void init_stuff (int argc, char *argv[])
 {
   GtkWidget *w;
 
-  GArray* words = g_array_new (FALSE, FALSE, sizeof(char*));
-  GArray* mappings = g_array_new (FALSE, FALSE, sizeof(char*));
-  int len = get_words_mappings_from_file("patterns.txt", words, mappings);
+  gchar *tmppath = g_build_filename(g_get_home_dir(), CONFIG_DIR, PATTERNS_FILE, NULL);
+  GArray *words = g_array_new (FALSE, FALSE, sizeof(char*));
+  GArray *mappings = g_array_new (FALSE, FALSE, sizeof(char*));
+
+  int len = get_words_mappings_from_file(tmppath, words, mappings);
   toUnicode = make_trie(words, mappings, len);
   toAscii = make_trie(mappings, words, len);
+  free(tmppath);
 
   GList *dev_list;
   GdkDevice *device;
@@ -61,7 +65,7 @@ void init_stuff (int argc, char *argv[])
   int i, j;
   struct Brush *b;
   gboolean can_xinput, success;
-  gchar *tmppath, *tmpfn;
+  gchar *tmpfn;
 
   // create some data structures needed to populate the preferences
   ui.default_page.bg = g_new(struct Background, 1);

@@ -138,6 +138,7 @@ Trie* make_trie(GArray* words, GArray* mappings, int len) {
 int get_words_mappings_from_file(char* filename, GArray* words, GArray* mappings) {
 	
 	FILE* fp = fopen(filename, "r");
+	if (fp == NULL) printf("Couldn't open patterns file\n");
 	char* word;
 	char* mapping;
 	int i = 0;

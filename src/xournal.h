@@ -38,6 +38,8 @@
 #define MRU_FILE "recent-files"
 #define MRU_SIZE 8 
 #define CONFIG_FILE "config"
+#define PATTERNS_FILE "patterns.txt"
+
 
 // apparently, not all Win32/64 compilers define WIN32 (?)
 
